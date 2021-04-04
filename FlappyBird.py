@@ -3,6 +3,7 @@ import neat
 import time
 import os
 import random
+pygame.font.init()
 
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
@@ -10,6 +11,7 @@ BIRD_IMGS = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bi
 PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "base.png")))
 BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bg.png")))
+STAT_FONT = pygame.font.SysFont("comicsans", 50)
 
 class Bird:
   IMGS = BIRD_IMGS
@@ -155,7 +157,7 @@ class Game:
     self.win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
     self.bird = Bird(230, 350)
     self.base = Base(730)
-    self.pipes = [Pipe(700)]
+    self.pipes = [Pipe(600)]
     self.score = 0
     self.clock = pygame.time.Clock()
     self.run = True
@@ -164,7 +166,8 @@ class Game:
     self.win.blit(BG_IMG, (0,0))
     for pipe in self.pipes:
       pipe.draw(self.win)
-    
+    text = STAT_FONT.render("Score: " +str(self.score), 1, (255,255,255))
+    self.win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
     self.base.draw(self.win)
     self.bird.draw(self.win)
     pygame.display.update()
@@ -174,7 +177,7 @@ class Game:
     add_pipe = False
     for pipe in self.pipes:
       if pipe.collision(self.bird):
-        pass
+        self.run = False
       
       if pipe.x + pipe.PIPE_TOP.get_width() < 0:
         rem.append(pipe)
@@ -186,7 +189,7 @@ class Game:
     
     if add_pipe:
       self.score += 1
-      self.pipes.append(Pipe(700))
+      self.pipes.append(Pipe(600))
     for r in rem:
       self.pipes.remove(r)
 
@@ -194,15 +197,17 @@ class Game:
     while self.run:
       self.clock.tick(30)
       for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          self.run = False   
-      #self.bird.move()
+        if event.type == pygame.KEYDOWN:
+          if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+            self.bird.jump()
+
+      self.bird.move()
       self.generate_pipes()
+      if self.bird.y + self.bird.img.get_height() >= 730:
+        self.run = False
+        
       self.base.move()
       self.draw_window()
-    
-    pygame.quit()
-    quit()
 
 def main():
   game = Game()
