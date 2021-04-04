@@ -155,14 +155,20 @@ class Base:
 class Game:
   def __init__(self):
     self.win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
-    self.bird = Bird(230, 350)
+    self.bird = Bird(220, 350)
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
     self.clock = pygame.time.Clock()
     self.run = True
+  
+  def reset(self):
+    self.bird = Bird(220, 350)
+    self.base = Base(730)
+    self.pipes = [Pipe(600)]
+    self.score = 0
 
-  def draw_window(self):
+  def draw_game_window(self):
     self.win.blit(BG_IMG, (0,0))
     for pipe in self.pipes:
       pipe.draw(self.win)
@@ -172,12 +178,33 @@ class Game:
     self.bird.draw(self.win)
     pygame.display.update()
   
+  def draw_start_screen_window(self):
+    self.win.blit(BG_IMG, (0,0))
+    text = STAT_FONT.render("Flappy Bird", 1, (255,255,255))
+    self.win.blit(text, (WIN_WIDTH/2 - text.get_width()/2, 100))
+    self.base.draw(self.win)
+    self.bird.draw(self.win)
+    pygame.display.update()
+  
+  def game_over_screen_window(self):
+    self.win.blit(BG_IMG, (0,0))
+    game_over = STAT_FONT.render("Game Over", 1, (255,255,255))
+    self.win.blit(game_over, (WIN_WIDTH/2 - game_over.get_width()/2, 100))
+    score_text = STAT_FONT.render("Score: " + str(self.score), 1, (255,255,255))
+    self.win.blit(score_text, (WIN_WIDTH/2 - score_text.get_width()/2, 100 + score_text.get_height() + 10))
+
+    self.base.draw(self.win)
+    self.bird.draw(self.win)
+    pygame.display.update()
+
   def generate_pipes(self):
     rem = []
     add_pipe = False
     for pipe in self.pipes:
       if pipe.collision(self.bird):
-        self.run = False
+        self.bird.y = 350
+        self.bird.tilt = 0
+        self.game_over_screen()
       
       if pipe.x + pipe.PIPE_TOP.get_width() < 0:
         rem.append(pipe)
@@ -203,14 +230,49 @@ class Game:
 
       self.bird.move()
       self.generate_pipes()
-      if self.bird.y + self.bird.img.get_height() >= 730:
-        self.run = False
+      if self.bird.y + self.bird.img.get_height() >= 730 or self.bird.y < 0:
+        self.bird.y = 350
+        self.bird.tilt = 0
+        self.game_over_screen()
         
       self.base.move()
-      self.draw_window()
+      self.draw_game_window()
+  
+  def start_screen(self):
+    run = True
+    while run:
+      self.clock.tick(30)
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          run = False
+          pygame.quit()
+          quit()
+        if event.type == pygame.KEYDOWN:
+          if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+            self.game_loop()
 
+      self.base.move()
+      self.draw_start_screen_window()
+
+  def game_over_screen(self):
+    run = True
+    while run:
+      self.clock.tick(30)
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          run = False
+          pygame.quit()
+          quit()
+        if event.type == pygame.KEYDOWN:
+          if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+            self.reset()
+            self.game_loop()
+            
+
+      self.base.move()
+      self.game_over_screen_window()
 def main():
   game = Game()
-  game.game_loop()
+  game.start_screen()
 
 main()
