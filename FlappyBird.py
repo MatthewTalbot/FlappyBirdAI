@@ -214,7 +214,7 @@ class Game:
     
     self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
     self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
-    self.quit = STAT_FONT.render("QUIT", 1, (255,255,255))
+    self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
     game_name = STAT_FONT.render("Flappy Bird", 1, (255,255,255))
 
     if self.is_play_game_hovered(mouse):
@@ -222,7 +222,7 @@ class Game:
     if self.is_genetic_ai_hovered(mouse):
       self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (100,100,100))
     if self.is_start_quit_hovered(mouse):
-      self.quit = STAT_FONT.render("QUIT", 1, (100,100,100))
+      self.quit = STAT_FONT.render("Quit", 1, (100,100,100))
 
     self.win.blit(game_name, (WIN_WIDTH/2 - game_name.get_width()/2, 100))
     self.win.blit(self.play_game, (WIN_WIDTH/2 - self.play_game.get_width()/2, 200))
