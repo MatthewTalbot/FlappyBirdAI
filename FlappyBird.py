@@ -125,7 +125,6 @@ class Pipe:
     
     return False
 
-
 class Base:
   VEL = 5
   WIDTH = BASE_IMG.get_width()
@@ -150,8 +149,6 @@ class Base:
     win.blit(self.IMG, (self.x1, self.y))
     win.blit(self.IMG, (self.x2, self.y))
 
-      
-
 class Game:
   def __init__(self):
     self.win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
@@ -159,14 +156,47 @@ class Game:
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
+    self.end_game_score = 0
     self.clock = pygame.time.Clock()
     self.run = True
+    self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
+    self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
+    self.play_again = STAT_FONT.render("Play Again", 1, (255,255,255))
+    self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
+    
   
   def reset(self):
+    self.bird.y = 350
+    self.bird.tilt = 0
     self.bird = Bird(220, 350)
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
+  
+  def is_play_game_hovered(self, mouse):
+    if mouse[0] >= WIN_WIDTH/2 - self.play_game.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.play_game.get_width()/2 + self.play_game.get_width() and mouse[1] >= 200 and mouse[1] <= 200 + self.play_game.get_height():
+      return True
+    return False
+  
+  def is_genetic_ai_hovered(self, mouse):
+    if mouse[0] >= WIN_WIDTH/2 - self.genetic_ai.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.genetic_ai.get_width()/2 + self.genetic_ai.get_width() and mouse[1] >= 250 and mouse[1] <= 250 + self.genetic_ai.get_height():
+      return True
+    return False
+  
+  def is_start_quit_hovered(self, mouse):
+    if mouse[0] >= WIN_WIDTH/2 - self.quit.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.quit.get_width()/2 + self.quit.get_width() and mouse[1] >= 300 and mouse[1] <= 300 + self.quit.get_height():
+      return True
+    return False
+  
+  def is_game_over_quit_hovered(self, mouse):
+    if mouse[0] >= WIN_WIDTH/2 - self.quit.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.quit.get_width()/2 + self.quit.get_width() and mouse[1] >= 250 and mouse[1] <= 250 + self.quit.get_height():
+      return True
+    return False
+  
+  def is_play_again_hovered(self, mouse):
+    if mouse[0] >= WIN_WIDTH/2 - self.play_again.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.play_again.get_width()/2 + self.play_again.get_width() and mouse[1] >= 200 and mouse[1] <= 200 + self.play_again.get_height():
+      return True
+    return False
 
   def draw_game_window(self):
     self.win.blit(BG_IMG, (0,0))
@@ -178,21 +208,45 @@ class Game:
     self.bird.draw(self.win)
     pygame.display.update()
   
-  def draw_start_screen_window(self):
+  def draw_start_screen_window(self, mouse):
     self.win.blit(BG_IMG, (0,0))
-    text = STAT_FONT.render("Flappy Bird", 1, (255,255,255))
-    self.win.blit(text, (WIN_WIDTH/2 - text.get_width()/2, 100))
+    
+    self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
+    self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
+    self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
+    game_name = STAT_FONT.render("Flappy Bird", 1, (255,255,255))
+
+    if self.is_play_game_hovered(mouse):
+      self.play_game = STAT_FONT.render("Play Game", 1, (100,100,100))
+    if self.is_genetic_ai_hovered(mouse):
+      self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (100,100,100))
+    if self.is_start_quit_hovered(mouse):
+      self.quit = STAT_FONT.render("Quit", 1, (100,100,100))
+
+    self.win.blit(game_name, (WIN_WIDTH/2 - game_name.get_width()/2, 100))
+    self.win.blit(self.play_game, (WIN_WIDTH/2 - self.play_game.get_width()/2, 200))
+    self.win.blit(self.genetic_ai, (WIN_WIDTH/2 - self.genetic_ai.get_width()/2, 250))
+    self.win.blit(self.quit, (WIN_WIDTH/2 - self.quit.get_width()/2, 300))
     self.base.draw(self.win)
     self.bird.draw(self.win)
     pygame.display.update()
   
-  def game_over_screen_window(self):
+  def game_over_screen_window(self, mouse):
     self.win.blit(BG_IMG, (0,0))
     game_over = STAT_FONT.render("Game Over", 1, (255,255,255))
-    self.win.blit(game_over, (WIN_WIDTH/2 - game_over.get_width()/2, 100))
-    score_text = STAT_FONT.render("Score: " + str(self.score), 1, (255,255,255))
-    self.win.blit(score_text, (WIN_WIDTH/2 - score_text.get_width()/2, 100 + score_text.get_height() + 10))
+    score_text = STAT_FONT.render("Score: " + str(self.end_game_score), 1, (255,255,255))
+    self.play_again = STAT_FONT.render("Play Again", 1, (255,255,255))
+    self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
+    if self.is_game_over_quit_hovered(mouse):
+      self.quit = STAT_FONT.render("Quit", 1, (100,100,100))
+    if self.is_play_again_hovered(mouse):
+      self.play_again = STAT_FONT.render("Play Again", 1, (100,100,100))
 
+    self.win.blit(game_over, (WIN_WIDTH/2 - game_over.get_width()/2, 100))
+    self.win.blit(score_text, (WIN_WIDTH/2 - score_text.get_width()/2, 150))
+    self.win.blit(self.play_again, (WIN_WIDTH/2 - self.play_again.get_width()/2, 200))
+    self.win.blit(self.quit, (WIN_WIDTH/2 - self.quit.get_width()/2, 250))
+    
     self.base.draw(self.win)
     self.bird.draw(self.win)
     pygame.display.update()
@@ -202,8 +256,8 @@ class Game:
     add_pipe = False
     for pipe in self.pipes:
       if pipe.collision(self.bird):
-        self.bird.y = 350
-        self.bird.tilt = 0
+        self.end_game_score = self.score
+        self.reset()
         self.game_over_screen()
       
       if pipe.x + pipe.PIPE_TOP.get_width() < 0:
@@ -220,19 +274,21 @@ class Game:
     for r in rem:
       self.pipes.remove(r)
 
-  def game_loop(self):
+  def start_game(self):
     while self.run:
       self.clock.tick(30)
       for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
           if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
             self.bird.jump()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+          self.bird.jump()
 
       self.bird.move()
       self.generate_pipes()
       if self.bird.y + self.bird.img.get_height() >= 730 or self.bird.y < 0:
-        self.bird.y = 350
-        self.bird.tilt = 0
+        self.end_game_score = self.score
+        self.reset()
         self.game_over_screen()
         
       self.base.move()
@@ -242,22 +298,27 @@ class Game:
     run = True
     while run:
       self.clock.tick(30)
+      mouse = pygame.mouse.get_pos()
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
           run = False
           pygame.quit()
           quit()
-        if event.type == pygame.KEYDOWN:
-          if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
-            self.game_loop()
-
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_play_game_hovered(mouse):
+          self.start_game()
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_start_quit_hovered(mouse):
+          quit()
+          
+        
       self.base.move()
-      self.draw_start_screen_window()
+      self.draw_start_screen_window(mouse)
 
   def game_over_screen(self):
     run = True
     while run:
       self.clock.tick(30)
+      mouse = pygame.mouse.get_pos()
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
           run = False
@@ -265,12 +326,18 @@ class Game:
           quit()
         if event.type == pygame.KEYDOWN:
           if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
-            self.reset()
-            self.game_loop()
-            
+            self.start_game()
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_play_again_hovered(mouse):
+          self.start_game()
+
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_game_over_quit_hovered(mouse):
+          quit()
 
       self.base.move()
-      self.game_over_screen_window()
+      self.game_over_screen_window(mouse)
+    
+
 def main():
   game = Game()
   game.start_screen()
