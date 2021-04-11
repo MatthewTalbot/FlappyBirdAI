@@ -158,7 +158,6 @@ class Game:
     self.score = 0
     self.end_game_score = 0
     self.clock = pygame.time.Clock()
-    self.run = True
     self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
     self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
     self.play_again = STAT_FONT.render("Play Again", 1, (255,255,255))
@@ -274,8 +273,9 @@ class Game:
     for r in rem:
       self.pipes.remove(r)
 
-  def start_game(self):
-    while self.run:
+  def player_start_game(self):
+    run = True
+    while run:
       self.clock.tick(30)
       for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -294,6 +294,18 @@ class Game:
       self.base.move()
       self.draw_game_window()
   
+  def genetic_ai_start_game(self, config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+    population = neat.Population(config)
+    population.add_reporter(neat.StdOutReporter(True))
+    population_stats = neat.StatisticsReporter()
+    population.add_reporter(population_stats)
+
+  def load_config(self):
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, "genetic-config.txt")
+    self.genetic_ai_start_game(config_path)
+
   def start_screen(self):
     run = True
     while run:
@@ -305,7 +317,7 @@ class Game:
           pygame.quit()
           quit()
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_play_game_hovered(mouse):
-          self.start_game()
+          self.player_start_game()
         
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_start_quit_hovered(mouse):
           quit()
