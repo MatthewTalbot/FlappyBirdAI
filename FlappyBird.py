@@ -82,11 +82,10 @@ class Bird:
     return pygame.mask.from_surface(self.img)
 
 class Pipe:
-  GAP = 200
-  def __init__(self, x):
+  def __init__(self, x, gap):
     self.x = x
     self.height = 0
-
+    self.gap = gap
     self.top = 0
     self.bottom = 0
     self.PIPE_TOP = pygame.transform.flip(PIPE_IMG, False, True)
@@ -98,7 +97,7 @@ class Pipe:
   def set_height(self):
     self.height = random.randrange(50,450)
     self.top = self.height - self.PIPE_TOP.get_height()
-    self.bottom = self.height + self.GAP
+    self.bottom = self.height + self.gap
 
   def move(self, velocity):
     self.x -= velocity
@@ -151,7 +150,8 @@ class Game:
     self.win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
     self.bird = Bird(220, 350)
     self.base = Base(730)
-    self.pipes = [Pipe(600)]
+    self.gap = 500
+    self.pipes = [Pipe(600, self.gap)]
     self.score = 0
     self.generation = 0
     self.end_game_score = 0
@@ -161,7 +161,6 @@ class Game:
     self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
     self.play_again = STAT_FONT.render("Play Again", 1, (255,255,255))
     self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
-    
   
   def reset(self):
     self.clock = pygame.time.Clock()
@@ -169,17 +168,21 @@ class Game:
     self.bird.tilt = 0
     self.bird = Bird(220, 350)
     self.base = Base(730)
-    self.pipes = [Pipe(600)]
+    self.gap = 500
+    self.pipes = [Pipe(600, self.gap)]
     self.score = 0
     self.velocity = 5
+    
   
   def ai_reset(self):
     self.clock = pygame.time.Clock()
     self.win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
     self.base = Base(730)
-    self.pipes = [Pipe(600)]
+    self.gap = 500
+    self.pipes = [Pipe(600, self.gap)]
     self.score = 0
     self.velocity = 5
+    
   
   def is_play_game_hovered(self, mouse):
     if mouse[0] >= WIN_WIDTH/2 - self.play_game.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.play_game.get_width()/2 + self.play_game.get_width() and mouse[1] >= 200 and mouse[1] <= 200 + self.play_game.get_height():
@@ -222,9 +225,11 @@ class Game:
       pipe.draw(self.win)
 
     generation = STAT_FONT.render("Generation: " + str(self.generation), 1, (255,255,255))
+    birds_remaining = STAT_FONT.render("Birds: " + str(len(birds)), 1, (255,255,255))
     score = STAT_FONT.render("Score: " + str(self.score), 1, (255,255,255))
     self.win.blit(score, (WIN_WIDTH - 10 - score.get_width(), 10))
     self.win.blit(generation, (10, 10))
+    self.win.blit(birds_remaining, (11, 15 + birds_remaining.get_height()))
     for bird in birds:
       bird.draw(self.win)
     self.base.draw(self.win)
@@ -273,12 +278,16 @@ class Game:
     self.bird.draw(self.win)
     pygame.display.update()
 
-  def set_velocity(self):
-    if self.score % 5 == 0 and self.score > 0:
+  def set_difficulty(self):
+    if self.score % 10 == 0 and self.score > 0:
         self.velocity += 1
+        self.gap -= 60
 
-    if self.velocity >= 15:
-      self.velocity = 15
+    if self.velocity >= 10:
+      self.velocity = 10
+
+    if self.gap <= 200:
+      self.gap = 200
 
   def generate_pipes(self):
     rem = []
@@ -300,8 +309,8 @@ class Game:
     
     if add_pipe:
       self.score += 1
-      self.set_velocity()
-      self.pipes.append(Pipe(600))
+      self.set_difficulty()
+      self.pipes.append(Pipe(600, self.gap))
 
     for r in rem:
       self.pipes.remove(r)
@@ -328,10 +337,10 @@ class Game:
     
     if add_pipe:
       self.score += 1
-      self.set_velocity()
+      self.set_difficulty()
       for g in ge:
         g.fitness += 5
-      self.pipes.append(Pipe(600))
+      self.pipes.append(Pipe(600, self.gap))
 
     for r in rem:
       self.pipes.remove(r)
@@ -398,7 +407,9 @@ class Game:
           ge.pop(x)
           birds.pop(x)
       
-      
+      if self.score == 500:
+        break
+
       self.base.move(self.velocity)
       self.draw_genetic_ai_game_window(birds)
         
@@ -408,7 +419,7 @@ class Game:
     population.add_reporter(neat.StdOutReporter(True))
     population_stats = neat.StatisticsReporter()
     population.add_reporter(population_stats)
-    winner = population.run(self.genetic_ai_fitness, 20)
+    winner = population.run(self.genetic_ai_fitness, 100)
 
     print("\nBest Bird!\n{!s}".format(winner))
     self.generation = 0
