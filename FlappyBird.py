@@ -83,8 +83,6 @@ class Bird:
 
 class Pipe:
   GAP = 200
-  VEL = 5
-
   def __init__(self, x):
     self.x = x
     self.height = 0
@@ -102,8 +100,8 @@ class Pipe:
     self.top = self.height - self.PIPE_TOP.get_height()
     self.bottom = self.height + self.GAP
 
-  def move(self):
-    self.x -= self.VEL
+  def move(self, velocity):
+    self.x -= velocity
 
   def draw(self, win):
     win.blit(self.PIPE_TOP, (self.x, self.top))
@@ -126,7 +124,6 @@ class Pipe:
     return False
 
 class Base:
-  VEL = 5
   WIDTH = BASE_IMG.get_width()
   IMG = BASE_IMG
 
@@ -135,9 +132,9 @@ class Base:
     self.x1 = 0
     self.x2 = self.WIDTH
 
-  def move(self):
-    self.x1 -= self.VEL
-    self.x2 -= self.VEL
+  def move(self, velocity):
+    self.x1 -= velocity
+    self.x2 -= velocity
 
     if self.x1 + self.WIDTH < 0:
       self.x1 = self.x2 + self.WIDTH
@@ -158,6 +155,7 @@ class Game:
     self.score = 0
     self.generation = 0
     self.end_game_score = 0
+    self.velocity = 5
     self.clock = pygame.time.Clock()
     self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
     self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
@@ -173,6 +171,7 @@ class Game:
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
+    self.velocity = 5
   
   def ai_reset(self):
     self.clock = pygame.time.Clock()
@@ -180,6 +179,7 @@ class Game:
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
+    self.velocity = 5
   
   def is_play_game_hovered(self, mouse):
     if mouse[0] >= WIN_WIDTH/2 - self.play_game.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.play_game.get_width()/2 + self.play_game.get_width() and mouse[1] >= 200 and mouse[1] <= 200 + self.play_game.get_height():
@@ -273,6 +273,13 @@ class Game:
     self.bird.draw(self.win)
     pygame.display.update()
 
+  def set_velocity(self):
+    if self.score % 5 == 0 and self.score > 0:
+        self.velocity += 1
+
+    if self.velocity >= 15:
+      self.velocity = 15
+
   def generate_pipes(self):
     rem = []
     add_pipe = False
@@ -289,10 +296,11 @@ class Game:
         pipe.passed = True
         add_pipe = True
 
-      pipe.move()
+      pipe.move(self.velocity)
     
     if add_pipe:
       self.score += 1
+      self.set_velocity()
       self.pipes.append(Pipe(600))
 
     for r in rem:
@@ -316,10 +324,11 @@ class Game:
       if pipe.x + pipe.PIPE_TOP.get_width() < 0:
         rem.append(pipe)
           
-      pipe.move()
+      pipe.move(self.velocity)
     
     if add_pipe:
       self.score += 1
+      self.set_velocity()
       for g in ge:
         g.fitness += 5
       self.pipes.append(Pipe(600))
@@ -331,6 +340,7 @@ class Game:
     run = True
     while run:
       self.clock.tick(30)
+
       for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
           if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
@@ -345,7 +355,7 @@ class Game:
         self.reset()
         self.game_over_screen()
         
-      self.base.move()
+      self.base.move(self.velocity)
       self.draw_game_window()
   
   def genetic_ai_fitness(self, genomes, config):
@@ -388,9 +398,8 @@ class Game:
           ge.pop(x)
           birds.pop(x)
       
-      if self.score == 20:
-        break
-      self.base.move()
+      
+      self.base.move(self.velocity)
       self.draw_genetic_ai_game_window(birds)
         
   def genetic_ai_start_game(self, config_path):
@@ -426,7 +435,7 @@ class Game:
         
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_start_quit_hovered(mouse):
           quit()
-      self.base.move()
+      self.base.move(self.velocity)
       self.draw_start_screen_window(mouse)
 
   def game_over_screen(self):
@@ -446,7 +455,7 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_game_over_quit_hovered(mouse):
           quit()
 
-      self.base.move()
+      self.base.move(self.velocity)
       self.game_over_screen_window(mouse)
     
 
