@@ -165,9 +165,16 @@ class Game:
     
   
   def reset(self):
+    self.clock = pygame.time.Clock()
     self.bird.y = 350
     self.bird.tilt = 0
     self.bird = Bird(220, 350)
+    self.base = Base(730)
+    self.pipes = [Pipe(600)]
+    self.score = 0
+  
+  def ai_reset(self):
+    self.clock = pygame.time.Clock()
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
@@ -201,12 +208,23 @@ class Game:
     self.win.blit(BG_IMG, (0,0))
     for pipe in self.pipes:
       pipe.draw(self.win)
-    text = STAT_FONT.render("Score: " +str(self.score), 1, (255,255,255))
+    text = STAT_FONT.render("Score: " + str(self.score), 1, (255,255,255))
     self.win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
     self.base.draw(self.win)
     self.bird.draw(self.win)
     pygame.display.update()
   
+  def draw_genetic_ai_game_window(self, birds):
+    self.win.blit(BG_IMG, (0,0))
+    for pipe in self.pipes:
+      pipe.draw(self.win)
+    text = STAT_FONT.render("Score: " +str(self.score), 1, (255,255,255))
+    self.win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
+    for bird in birds:
+      bird.draw(self.win)
+    self.base.draw(self.win)
+    pygame.display.update()
+
   def draw_start_screen_window(self, mouse):
     self.win.blit(BG_IMG, (0,0))
     
@@ -273,6 +291,35 @@ class Game:
     for r in rem:
       self.pipes.remove(r)
 
+  def generate_ai_pipes(self, birds, nets, ge):
+    rem = []
+    add_pipe = False
+    for pipe in self.pipes:
+      for x, bird in enumerate(birds):
+        if pipe.collision(bird):
+          ge[x].fitness -= 1
+          nets.pop(x)
+          ge.pop(x)
+          birds.pop(x)
+
+        if not pipe.passed and pipe.x < bird.x:
+          pipe.passed = True
+          add_pipe = True
+
+      if pipe.x + pipe.PIPE_TOP.get_width() < 0:
+        rem.append(pipe)
+        
+      pipe.move()
+    
+    if add_pipe:
+      self.score += 1
+      for g in ge:
+        g.fitness += 5
+      self.pipes.append(Pipe(600))
+
+    for r in rem:
+      self.pipes.remove(r)
+
   def player_start_game(self):
     run = True
     while run:
@@ -294,12 +341,59 @@ class Game:
       self.base.move()
       self.draw_game_window()
   
+  def genetic_ai_fitness(self, genomes, config):
+    birds = []
+    nets = []
+    ge = []
+
+    for _, g in genomes:
+      net = neat.nn.FeedForwardNetwork.create(g, config)
+      nets.append(net)
+      birds.append(Bird(220, 350))
+      g.fitness = 0
+      ge.append(g)
+
+    run = True
+    while run:
+      self.clock.tick(30)
+      pipe_ind = 0
+      if len(birds) > 0:
+        if len(self.pipes) > 1 and birds[0].x > self.pipes[0].x + self.pipes[0].PIPE_TOP.get_width():
+          pipe_ind = 1
+
+      for x, bird in enumerate(birds):
+        bird.move()
+        ge[x].fitness += 0.1
+        output = nets[x].activate((bird.y, abs(bird.y - self.pipes[pipe_ind].height), abs(bird.y - self.pipes[pipe_ind].bottom)))
+
+        if output[0] > 0.5:
+          bird.jump()
+
+      self.generate_ai_pipes(birds, nets, ge)
+      for x, bird in enumerate(birds):
+        if bird.y + bird.img.get_height() >= 730 or bird.y < 0:
+          birds.pop(x)
+          nets.pop(x)
+          ge.pop(x)
+
+      if not birds:
+        self.ai_reset()
+        run = False
+        break
+
+      self.base.move()
+      self.draw_genetic_ai_game_window(birds)
+
+
   def genetic_ai_start_game(self, config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
     population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
     population_stats = neat.StatisticsReporter()
     population.add_reporter(population_stats)
+    winner = population.run(self.genetic_ai_fitness, 50)
+
+    self.start_screen()
 
   def load_config(self):
     local_dir = os.path.dirname(__file__)
@@ -313,11 +407,12 @@ class Game:
       mouse = pygame.mouse.get_pos()
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
-          run = False
-          pygame.quit()
           quit()
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_play_game_hovered(mouse):
           self.player_start_game()
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_genetic_ai_hovered(mouse):
+          self.load_config()
         
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_start_quit_hovered(mouse):
           quit()
@@ -336,12 +431,9 @@ class Game:
           run = False
           pygame.quit()
           quit()
-        if event.type == pygame.KEYDOWN:
-          if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
-            self.start_game()
         
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_play_again_hovered(mouse):
-          self.start_game()
+          self.player_start_game()
 
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_game_over_quit_hovered(mouse):
           quit()
