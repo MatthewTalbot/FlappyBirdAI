@@ -156,6 +156,7 @@ class Game:
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
+    self.generation = 0
     self.end_game_score = 0
     self.clock = pygame.time.Clock()
     self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
@@ -175,6 +176,7 @@ class Game:
   
   def ai_reset(self):
     self.clock = pygame.time.Clock()
+    self.win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
     self.base = Base(730)
     self.pipes = [Pipe(600)]
     self.score = 0
@@ -218,8 +220,11 @@ class Game:
     self.win.blit(BG_IMG, (0,0))
     for pipe in self.pipes:
       pipe.draw(self.win)
-    text = STAT_FONT.render("Score: " +str(self.score), 1, (255,255,255))
-    self.win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
+
+    generation = STAT_FONT.render("Generation: " + str(self.generation), 1, (255,255,255))
+    score = STAT_FONT.render("Score: " + str(self.score), 1, (255,255,255))
+    self.win.blit(score, (WIN_WIDTH - 10 - score.get_width(), 10))
+    self.win.blit(generation, (10, 10))
     for bird in birds:
       bird.draw(self.win)
     self.base.draw(self.win)
@@ -283,11 +288,13 @@ class Game:
       if not pipe.passed and pipe.x < self.bird.x:
         pipe.passed = True
         add_pipe = True
+
       pipe.move()
     
     if add_pipe:
       self.score += 1
       self.pipes.append(Pipe(600))
+
     for r in rem:
       self.pipes.remove(r)
 
@@ -308,7 +315,7 @@ class Game:
 
       if pipe.x + pipe.PIPE_TOP.get_width() < 0:
         rem.append(pipe)
-        
+          
       pipe.move()
     
     if add_pipe:
@@ -342,25 +349,29 @@ class Game:
       self.draw_game_window()
   
   def genetic_ai_fitness(self, genomes, config):
+    run = True
     birds = []
     nets = []
     ge = []
-
+    self.ai_reset()
+    self.generation += 1
     for _, g in genomes:
       net = neat.nn.FeedForwardNetwork.create(g, config)
       nets.append(net)
       birds.append(Bird(220, 350))
       g.fitness = 0
       ge.append(g)
-
-    run = True
-    while run:
+    
+    while run and len(birds) > 0:
       self.clock.tick(30)
-      pipe_ind = 0
-      if len(birds) > 0:
-        if len(self.pipes) > 1 and birds[0].x > self.pipes[0].x + self.pipes[0].PIPE_TOP.get_width():
-          pipe_ind = 1
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          quit()
 
+      pipe_ind = 0
+      if len(self.pipes) > 1 and birds[0].x > self.pipes[0].x + self.pipes[0].PIPE_TOP.get_width():
+        pipe_ind = 1
+      
       for x, bird in enumerate(birds):
         bird.move()
         ge[x].fitness += 0.1
@@ -368,31 +379,30 @@ class Game:
 
         if output[0] > 0.5:
           bird.jump()
-
+      
+      
       self.generate_ai_pipes(birds, nets, ge)
       for x, bird in enumerate(birds):
         if bird.y + bird.img.get_height() >= 730 or bird.y < 0:
-          birds.pop(x)
           nets.pop(x)
           ge.pop(x)
-
-      if not birds:
-        self.ai_reset()
-        run = False
+          birds.pop(x)
+      
+      if self.score == 20:
         break
-
       self.base.move()
       self.draw_genetic_ai_game_window(birds)
-
-
+        
   def genetic_ai_start_game(self, config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
     population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
     population_stats = neat.StatisticsReporter()
     population.add_reporter(population_stats)
-    winner = population.run(self.genetic_ai_fitness, 50)
+    winner = population.run(self.genetic_ai_fitness, 20)
 
+    print("\nBest Bird!\n{!s}".format(winner))
+    self.generation = 0
     self.start_screen()
 
   def load_config(self):
@@ -416,8 +426,6 @@ class Game:
         
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_start_quit_hovered(mouse):
           quit()
-          
-        
       self.base.move()
       self.draw_start_screen_window(mouse)
 
