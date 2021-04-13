@@ -160,6 +160,7 @@ class Game:
     self.play_game = STAT_FONT.render("Play Game", 1, (255,255,255))
     self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (255,255,255))
     self.play_again = STAT_FONT.render("Play Again", 1, (255,255,255))
+    self.main_menu = STAT_FONT.render("Main Menu", 1, (255,255,255))
     self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
   
   def reset(self):
@@ -194,15 +195,17 @@ class Game:
       return True
     return False
   
-  def is_start_quit_hovered(self, mouse):
+  def is_quit_hovered(self, mouse):
     if mouse[0] >= WIN_WIDTH/2 - self.quit.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.quit.get_width()/2 + self.quit.get_width() and mouse[1] >= 300 and mouse[1] <= 300 + self.quit.get_height():
       return True
     return False
   
-  def is_game_over_quit_hovered(self, mouse):
-    if mouse[0] >= WIN_WIDTH/2 - self.quit.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.quit.get_width()/2 + self.quit.get_width() and mouse[1] >= 250 and mouse[1] <= 250 + self.quit.get_height():
+  def is_main_menu_hovered(self, mouse):
+    if mouse[0] >= WIN_WIDTH/2 - self.main_menu.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.main_menu.get_width()/2 + self.main_menu.get_width() and mouse[1] >= 250 and mouse[1] <= 250 + self.main_menu.get_height():
       return True
     return False
+  
+  
   
   def is_play_again_hovered(self, mouse):
     if mouse[0] >= WIN_WIDTH/2 - self.play_again.get_width()/2 and mouse[0] <= WIN_WIDTH/2 - self.play_again.get_width()/2 + self.play_again.get_width() and mouse[1] >= 200 and mouse[1] <= 200 + self.play_again.get_height():
@@ -247,7 +250,7 @@ class Game:
       self.play_game = STAT_FONT.render("Play Game", 1, (100,100,100))
     if self.is_genetic_ai_hovered(mouse):
       self.genetic_ai = STAT_FONT.render("Genetic AI", 1, (100,100,100))
-    if self.is_start_quit_hovered(mouse):
+    if self.is_quit_hovered(mouse):
       self.quit = STAT_FONT.render("Quit", 1, (100,100,100))
 
     self.win.blit(game_name, (WIN_WIDTH/2 - game_name.get_width()/2, 100))
@@ -263,16 +266,23 @@ class Game:
     game_over = STAT_FONT.render("Game Over", 1, (255,255,255))
     score_text = STAT_FONT.render("Score: " + str(self.end_game_score), 1, (255,255,255))
     self.play_again = STAT_FONT.render("Play Again", 1, (255,255,255))
+    self.main_menu = STAT_FONT.render("Main Menu", 1, (255,255,255))
     self.quit = STAT_FONT.render("Quit", 1, (255,255,255))
-    if self.is_game_over_quit_hovered(mouse):
-      self.quit = STAT_FONT.render("Quit", 1, (100,100,100))
+
     if self.is_play_again_hovered(mouse):
       self.play_again = STAT_FONT.render("Play Again", 1, (100,100,100))
+    
+    if self.is_main_menu_hovered(mouse):
+      self.main_menu = STAT_FONT.render("Main Menu", 1, (100,100,100))
+    if self.is_quit_hovered(mouse):
+      self.quit = STAT_FONT.render("Quit", 1, (100,100,100))
+    
 
     self.win.blit(game_over, (WIN_WIDTH/2 - game_over.get_width()/2, 100))
     self.win.blit(score_text, (WIN_WIDTH/2 - score_text.get_width()/2, 150))
     self.win.blit(self.play_again, (WIN_WIDTH/2 - self.play_again.get_width()/2, 200))
-    self.win.blit(self.quit, (WIN_WIDTH/2 - self.quit.get_width()/2, 250))
+    self.win.blit(self.main_menu, (WIN_WIDTH/2 - self.play_again.get_width()/2, 250))
+    self.win.blit(self.quit, (WIN_WIDTH/2 - self.quit.get_width()/2, 300))
     
     self.base.draw(self.win)
     self.bird.draw(self.win)
@@ -444,7 +454,7 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_genetic_ai_hovered(mouse):
           self.load_config()
         
-        if event.type == pygame.MOUSEBUTTONDOWN and self.is_start_quit_hovered(mouse):
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_quit_hovered(mouse):
           quit()
       self.base.move(self.velocity)
       self.draw_start_screen_window(mouse)
@@ -462,8 +472,11 @@ class Game:
         
         if event.type == pygame.MOUSEBUTTONDOWN and self.is_play_again_hovered(mouse):
           self.player_start_game()
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_main_menu_hovered(mouse):
+          self.start_screen()
 
-        if event.type == pygame.MOUSEBUTTONDOWN and self.is_game_over_quit_hovered(mouse):
+        if event.type == pygame.MOUSEBUTTONDOWN and self.is_quit_hovered(mouse):
           quit()
 
       self.base.move(self.velocity)
