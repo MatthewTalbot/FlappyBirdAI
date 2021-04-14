@@ -119,15 +119,15 @@ class Pipe:
   
   #Pixel perfect collision detection
   def collision(self, bird):
-    bird_mask = bird.get_mask() #Gets the mask image of the bird
-    top_mask = pygame.mask.from_surface(self.PIPE_TOP) #Gets the mask image of the top pipe
-    bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM) #Gets the mask image of the bottom pipe
+    bird_mask = bird.get_mask()                                     #Gets the mask image of the bird
+    top_mask = pygame.mask.from_surface(self.PIPE_TOP)              #Gets the mask image of the top pipe
+    bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)        #Gets the mask image of the bottom pipe
 
-    top_offset = (self.x - bird.x, self.top - round(bird.y)) #Calculates how far away the top bird pixel is from the top pipe
-    bottom_offset = (self.x - bird.x, self.bottom - round(bird.y)) #Calculates how far away the top bird pixel is from the bottom pipe
+    top_offset = (self.x - bird.x, self.top - round(bird.y))        #Calculates how far away the top bird pixel is from the top pipe
+    bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))  #Calculates how far away the top bird pixel is from the bottom pipe
 
-    bottom_point = bird_mask.overlap(bottom_mask, bottom_offset) #Calculates if the bottom bird pixel overlaps with the bottom pipe pixel
-    top_point = bird_mask.overlap(top_mask, top_offset) #Calculates if the top bird pixel overlaps with the top pipe pixel
+    bottom_point = bird_mask.overlap(bottom_mask, bottom_offset)    #Calculates if the bottom bird pixel overlaps with the bottom pipe pixel
+    top_point = bird_mask.overlap(top_mask, top_offset)             #Calculates if the top bird pixel overlaps with the top pipe pixel
 
     #If there was an overlap it means the bird has collided with the pipe
     if top_point or bottom_point: 
@@ -463,7 +463,7 @@ class Game:
         bird.move()           #Move the bird
         ge[x].fitness += 0.1  #Reward the bird for being alive
                               #Calculate if the bird should jump or not
-        jump = nets[x].activate((bird.y, abs(bird.y - self.pipes[pipe_ind].height), abs(bird.y - self.pipes[pipe_ind].bottom))) 
+        jump = nets[x].activate((bird.y, abs(bird.y - self.pipes[pipe_ind].height), abs(bird.y - self.pipes[pipe_ind].bottom)))
 
         #If the value of jump is greater than 0.5 than bird should jump
         if jump[0] > 0.5:
